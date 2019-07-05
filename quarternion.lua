@@ -3,23 +3,25 @@
 -- desc:   Quarternion rotation with tic80
 -- script: lua
 
--- center of scene
-center = {0, 0, 300}
-
--- distance to screen (depth)
-d = 180
--- center of rotation
-pivot = {0, 0, 0}
-angle = 0
-ax = {1, 0, 0}
-ay = {0, 1, 0}
-points = {}
-
 sqrt = math.sqrt
 cos = math.cos
 sin = math.sin
 abs = math.abs
 floor = math.floor
+
+
+
+-- center of scene
+center = {0, 0, 300}
+
+-- distance to screen (depth)
+d = 300
+-- center of rotation
+pivot = {0, 0, 0}
+h = {c = 1, v = {0, 0, 0}}
+c = cos(0.03)
+s = sin(0.03)
+points = {}
 
 function norm(v)
 	return sqrt(v[1]*v[1] + v[2]*v[2] + v[3]*v[3])
@@ -27,7 +29,11 @@ end
 
 function normalise(v)
 	local r = norm(v)
-	return scale(1/r, v)
+	if r == 0 then 
+		return {0, 0, 0} 
+	else 
+		return scale(1/r, v)
+	end
 end
 
 function add(u, v)
@@ -46,17 +52,39 @@ function dot(u, v)
 	return u[1]*v[1] + u[2]*v[2] + u[3]*v[3]
 end
 
-function rotateQuarternion(p3d, pivot, axis, angle)
+function quarternionMultiplication(h, g)
+	local c1 = h.c
+	local c2 = g.c
+	local v1 = h.v
+	local v2 = g.v
+
+	return {c = c1*c2 - dot(v1, v2), 
+			v = add(add(scale(c1, v2), scale(c2, v1)), cross(v1, v2))}
+end
+
+function rotateQuarternion(p3d, h)
+	local c = h.c
+	local u = h.v
 	local v = add(p3d.v, scale(-1, pivot))
-	local c = cos(angle/2)
-	local s = sin(angle/2)
-	local u = scale(s, axis)
+	local s = norm(u)
 
 	local k = dot(u, v)
 	local w = cross(u, v)
 
 	p3d.v = add(add(add(scale(2*k, u), scale(c*c-s*s, v)), scale(2*c, w)), pivot)
 end
+
+-- function rotateQuarternion(p3d, pivot, axis, angle)
+-- 	local v = add(p3d.v, scale(-1, pivot))
+-- 	local c = cos(angle/2)
+-- 	local s = sin(angle/2)
+-- 	local u = scale(s, axis)
+
+-- 	local k = dot(u, v)
+-- 	local w = cross(u, v)
+
+-- 	p3d.v = add(add(add(scale(2*k, u), scale(c*c-s*s, v)), scale(2*c, w)), pivot)
+-- end
 
 function createCube()
 	points = {}
@@ -87,16 +115,36 @@ function zsort(p1, p2)
 	return p1.v[3] > p2.v[3]
 end
 
+
 function TIC()
-	
+
+	g = {c = 1, v = {0, 0, 0}}
+	if btn(0) then 
+		g.c = c
+		g.v = add(g.v, {-1, 0, 0})
+	end
+	if btn(1) then 
+		g.c = c
+		g.v = add(g.v, {1, 0, 0})
+	end
+	if btn(2) then 
+		g.c = c
+		g.v = add(g.v, {0, 1, 0})
+	end
+	if btn(3) then 
+		g.c = c
+		g.v = add(g.v, {0, -1, 0})
+	end
+	g.v = scale(s, normalise(g.v))
+	h = quarternionMultiplication(g, h)
+
 	cls(10)
 
-	-- createCube()
-	createTeapot()
-
+	createCube()
+	-- createTeapot()
+	
 	for k,p in pairs(points) do
-		rotateQuarternion(p, {0, 0, 0}, normalise({0, 0, 1}), 0.7)
-		rotateQuarternion(p, pivot, {0, 1, 0}, angle)
+		rotateQuarternion(p, h)
 	end
 
 	table.sort(points, zsort)
@@ -106,7 +154,6 @@ function TIC()
 		rect(i + 120, j + 68, 6, 6, p.c)
 	end
 
-	angle = angle + 0.05
 end
 
 function createTeapot()
@@ -418,6 +465,7 @@ function createTeapot()
 		{v={ 0.7980,1.5000,-1.4250},c=0},
 		{v={ 1.4250,1.5000,-0.7980},c=0}
 	}
+	-- scale and color
 	for k,p in pairs(points) do
 		p.c = abs(floor(p.v[1]+4))
 		p.v = scale(20, p.v)
