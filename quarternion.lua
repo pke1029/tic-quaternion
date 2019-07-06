@@ -3,6 +3,8 @@
 -- desc:   Quarternion rotation with tic80
 -- script: lua
 
+
+-- math operator
 sqrt = math.sqrt
 cos = math.cos
 sin = math.sin
@@ -10,18 +12,17 @@ abs = math.abs
 floor = math.floor
 
 
-
 -- center of scene
 center = {0, 0, 300}
-
 -- distance to screen (depth)
 d = 300
 -- center of rotation
 pivot = {0, 0, 0}
 h = {c = 1, v = {0, 0, 0}}
-c = cos(0.03)
-s = sin(0.03)
+c = cos(0.02)
+s = sin(0.02)
 points = {}
+model = true
 
 function norm(v)
 	return sqrt(v[1]*v[1] + v[2]*v[2] + v[3]*v[3])
@@ -118,6 +119,7 @@ end
 
 function TIC()
 
+	-- compute new 4 vector
 	g = {c = 1, v = {0, 0, 0}}
 	if btn(0) then 
 		g.c = c
@@ -135,24 +137,33 @@ function TIC()
 		g.c = c
 		g.v = add(g.v, {0, -1, 0})
 	end
+	if btnp(4) then
+		model = not model
+	end
+	if btn(5) then
+		h = {c = 1, v = {0, 0, 0}}
+	end
 	g.v = scale(s, normalise(g.v))
 	h = quarternionMultiplication(g, h)
 
 	cls(10)
 
-	createCube()
-	-- createTeapot()
+	if model then createCube() else createTeapot() end
 	
+	-- rotate
 	for k,p in pairs(points) do
 		rotateQuarternion(p, h)
 	end
 
 	table.sort(points, zsort)
 
+	-- draw
 	for k,p in pairs(points) do
 		i, j = p2d(p)
 		rect(i + 120, j + 68, 6, 6, p.c)
 	end
+	print("z : change model\nx : reset orientation")
+	print("h={"..string.format("%01f",h.c)..","..string.format("%01f",h.v[1])..","..string.format("%01f",h.v[2])..","..string.format("%01f",h.v[3]).."}", 0, 130)
 
 end
 
