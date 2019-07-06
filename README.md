@@ -1,5 +1,7 @@
 # tic80-quarternion
 
+Check out the demo at https://tic.computer/play?cart=882.
+
 ![](teapot.gif)
 
 Inspiration from [p3d](https://github.com/nesbox/TIC-80/blob/master/demos/p3d.tic) by Filippo. 
